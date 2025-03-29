@@ -1,0 +1,398 @@
+Below is a comprehensive, centralized implementation document that unifies our entire vision for Eva—from the high-level UX narrative and user journey to the detailed TDD-based development plan, including integration with all your calendars. This document is designed to serve as the single source of truth for design, development, testing, and production-readiness.
+
+---
+
+# Eva: Your Executive Virtual Assistant – Implementation & UX Blueprint
+
+*Version 1.0 • Date: 2025-03-29*
+
+---
+
+## Table of Contents
+
+1. [Executive Summary](#executive-summary)
+2. [Project Vision & Objectives](#project-vision--objectives)
+3. [User Journey: From Newbie to Evangelist](#user-journey-from-newbie-to-evangelist)
+4. [Front-End UX & Interaction Design](#front-end-ux--interaction-design)
+5. [Technical Implementation & TDD Strategy](#technical-implementation--tdd-strategy)
+    - 5.1 [Folder Structure & Requirements](#folder-structure--requirements)
+    - 5.2 [Phase 1: Setup & Environment Configuration](#phase-1-setup--environment-configuration)
+    - 5.3 [Phase 2: Planning Engine](#phase-2-planning-engine)
+    - 5.4 [Phase 3: Conversation Layer](#phase-3-conversation-layer)
+    - 5.5 [Phase 4: Real-Time Dashboard](#phase-4-real-time-dashboard)
+    - 5.6 [Testing Strategy & Coverage](#testing-strategy--coverage)
+6. [Calendar Integration Overview](#calendar-integration-overview)
+7. [Conclusion & Next Steps](#conclusion--next-steps)
+
+---
+
+## 1. Executive Summary
+
+Eva is designed as an AI-powered life co-pilot that helps busy executives, founders, and new parents structure their week to live confidently. Eva not only aggregates your multiple calendars and creates a unified, color-coded weekly plan but also provides real-time nudges, conversational support, and reflective insights on your performance. This document details the UX vision, user journey, and a comprehensive test-driven development (TDD) plan that ensures each module is robust, production-ready, and capable of acquiring paying, happy customers.
+
+---
+
+## 2. Project Vision & Objectives
+
+### Vision Statement
+
+Eva is more than just a scheduler—she is your intelligent, empathetic assistant who organizes your life with clarity and warmth. By delivering instant insight into your day and providing adaptive, human-centered nudges, Eva transforms chaotic schedules into well-balanced, achievable plans.
+
+### Core Objectives
+
+- **Instant Clarity:** Deliver a weekly plan that clearly shows your priorities alongside existing commitments.
+- **Intuitive Interactions:** Enable natural language dialogues for quick adjustments and micro-task management.
+- **Real-Time Adaptability:** Provide dynamic nudges and updates that reflect real-time calendar changes.
+- **Holistic Integration:** Aggregate all of your calendars into one seamless, unified timeline.
+- **Emotional Reassurance:** Offer empathetic, personalized feedback that builds trust and drives continuous improvement.
+
+---
+
+## 3. User Journey: From Newbie to Evangelist
+
+### **Day 1: Onboarding & Setup**
+
+- **Welcome Screen:**  
+  You download Eva and are greeted by a clean, calming welcome screen. A brief animated introduction outlines Eva’s benefits.
+- **Personalized Onboarding:**  
+  You connect all your calendars (Google, Outlook, etc.) via secure OAuth, and enter your high-level priorities (e.g., “3 workouts, 2 deep work sessions, 1 family dinner”).
+- **Initial Impression:**  
+  Eva’s conversational onboarding makes you feel understood and reassured that her setup is tailored to your busy, multifaceted life.
+
+### **Day 2: Experiencing the First Weekly Plan**
+
+- **Plan Generation:**  
+  Early the next morning, Eva presents your weekly plan—a unified calendar overlay with color-coded blocks for each priority, including protected slots and buffer zones.
+- **User Review:**  
+  You review and fine-tune the plan, shifting a creative block to a better time based on your personal rhythm.
+- **Emotional Impact:**  
+  The plan’s alignment with your priorities reduces your anxiety and instills confidence.
+
+### **Day 3: Real-Time Interaction & Adaptive Nudges**
+
+- **Dynamic Nudges:**  
+  Mid-morning, Eva notifies you via a gentle pop-up that your deep work session was missed, and suggests rescheduling it later.
+- **Micro-Task Mode:**  
+  In a 10-minute free slot, Eva suggests a micro-task (e.g., sending a quick follow-up email), which you complete for a small win.
+- **Emotional Impact:**  
+  Eva’s timely nudges make you feel supported without being intrusive.
+
+### **Day 4: Conversational Refinement**
+
+- **Deep Conversation:**  
+  In the evening, you ask Eva, “How can I better balance my workload with family time?”  
+  She responds with actionable suggestions and offers to adjust your plan dynamically.
+- **Emotional Impact:**  
+  You feel empowered and in control as Eva helps you navigate complex trade-offs.
+
+### **Day 7: End-of-Week Reflection**
+
+- **Reflection Dashboard:**  
+  On Sunday, Eva presents a detailed summary of planned vs. actual activities using engaging visuals and insight cards.
+- **Feedback & Adjustment:**  
+  You provide feedback and Eva suggests refinements for the upcoming week, reinforcing her role as your trusted advisor.
+- **Emotional Impact:**  
+  Ending the week on a high note, you begin to see measurable improvements in your schedule adherence and overall well-being.
+
+### **Weeks 2–Month 1: From User to Evangelist**
+
+- **Sustained Engagement:**  
+  Daily interactions build trust; Eva adapts and learns, helping you optimize your schedule.
+- **Deep Personalization:**  
+  Over time, Eva begins suggesting adjustments that align with your long-term life path and ambitions.
+- **Evangelism Emergence:**  
+  Impressed by tangible improvements in your work-life balance, you start sharing your success story with peers and on social media, becoming a passionate advocate for Eva.
+
+---
+
+## 4. Front-End UX & Interaction Design
+
+### **Overall Design Principles**
+
+- **Calm & Minimalistic:**  
+  A clean design with ample white space and a soft color palette (soft blues, muted greens, warm neutrals) to minimize cognitive load.
+- **Conversational Interface:**  
+  Chat-like interactions for onboarding, plan adjustments, and daily nudges that simulate a natural dialogue with Eva.
+- **Dynamic Visualizations:**  
+  A unified dashboard that overlays planned vs. actual events using intuitive color codes, progress bars, and interactive cards.
+- **Responsive Micro-Interactions:**  
+  Subtle animations (fades, slides) for notifications and state changes that enhance user delight.
+- **Accessibility:**  
+  Adherence to WCAG 2.1 AA standards, ensuring the interface is navigable and inclusive across devices.
+
+### **Key Screens & Flows**
+
+1. **Home Dashboard:**  
+   - A weekly snapshot showing all events (aggregated from multiple calendars) and Eva’s recommended time blocks.
+   - A floating chat bubble for quick interactions.
+2. **Onboarding Flow:**  
+   - An animated welcome and setup process that gathers your priorities and integrates your calendars.
+3. **Real-Time Interaction:**  
+   - Dynamic nudges and pop-up cards that notify you of missed blocks or opportunities to complete micro-tasks.
+4. **End-of-Week Reflection:**  
+   - A summary dashboard that contrasts planned vs. actual events, accompanied by insight cards and suggestions for improvement.
+5. **Conversational Modal:**  
+   - A chat interface where you can ask questions, receive advice, and adjust your plan interactively.
+
+---
+
+## 5. Technical Implementation & TDD Strategy
+
+### 5.1 Folder Structure & Requirements
+
+```
+eva-project/
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── robots.txt
+├── docs/
+│   ├── README.md
+│   ├── FolderStructure.md
+│   ├── Phase1_Setup.md
+│   ├── Phase2_PlanningEngine.md
+│   ├── Phase3_ConversationLayer.md
+│   ├── Phase4_RealTimeDashboard.md
+│   └── Testing.md
+└── src/
+    ├── eva/
+    │   ├── __init__.py
+    │   ├── main.py
+    │   ├── calendar_integration.py
+    │   ├── planning_engine.py
+    │   ├── conversation.py
+    │   ├── dashboard.py
+    │   └── utils.py
+    └── tests/
+        ├── test_setup.py
+        ├── test_calendar_integration.py
+        ├── test_planning_engine.py
+        ├── test_conversation.py
+        ├── test_dashboard.py
+        ├── test_integration.py
+        ├── test_e2e.py
+        ├── test_user_acceptance.py
+        ├── test_performance.py
+        └── test_security.py
+```
+
+**Requirements File (requirements.txt):**
+```txt
+openai==0.27.0
+google-api-python-client==2.70.0
+google-auth==2.18.0
+streamlit==1.25.0
+pytest==7.2.0
+flake8==5.0.4
+requests==2.28.1
+```
+
+**robots.txt:**
+```txt
+User-agent: *
+Disallow:
+```
+
+---
+
+### 5.2 Phase 1: Setup & Environment Configuration
+
+**Objectives:**
+
+- Initialize the repository, virtual environment, and folder structure.
+- Install dependencies.
+- Write a smoke test to verify module imports.
+
+**Steps:**
+
+1. **Initialize Repository:**  
+   - Run `git init` and create a `.gitignore` file.
+2. **Set Up Virtual Environment:**  
+   - Create and activate a virtual environment.
+   - Install packages via `pip install -r requirements.txt`.
+3. **Create Folder Structure:**  
+   - Set up directories as shown above.
+4. **Smoke Test:**  
+   - File: `src/tests/test_setup.py`
+   ```python
+   def test_imports():
+       from eva import main, calendar_integration, planning_engine, conversation, dashboard
+       assert main is not None
+   ```
+5. **CI Setup (Optional):**  
+   - Configure CI to run tests on commits.
+
+---
+
+### 5.3 Phase 2: Planning Engine
+
+**Objectives:**
+
+- Parse natural language input for priorities.
+- Generate a weekly plan by reading aggregated calendar events.
+
+**Steps:**
+
+1. **Parsing Priorities:**  
+   - Function: `parse_priorities(input_str: str) -> dict` in `src/eva/planning_engine.py`.
+   - Test (in `src/tests/test_planning_engine.py`):
+   ```python
+   def test_parse_priorities():
+       from eva.planning_engine import parse_priorities
+       input_str = "I need 3 workouts, 2 deep work sessions, and 1 family dinner."
+       priorities = parse_priorities(input_str)
+       assert priorities["workouts"] == 3
+       assert priorities["deep_work"] == 2
+       assert priorities["family_dinner"] == 1
+   ```
+2. **Calendar Integration Stub:**  
+   - Function: `get_week_events()` in `src/eva/calendar_integration.py` returns dummy events.
+   - Corresponding tests in `src/tests/test_calendar_integration.py`.
+3. **Plan Generation:**  
+   - Function: `generate_weekly_plan(priorities: dict, events: list) -> dict` in `src/eva/planning_engine.py`.
+   - Test example:
+   ```python
+   def test_generate_weekly_plan():
+       from eva.planning_engine import generate_weekly_plan
+       dummy_priorities = {"workouts": 3, "deep_work": 2, "family_dinner": 1}
+       dummy_events = [{"start": "2023-01-01T09:00", "end": "2023-01-01T10:00"}]
+       plan = generate_weekly_plan(dummy_priorities, dummy_events)
+       assert "workouts" in plan
+       # Additional assertions to check non-overlapping time blocks
+   ```
+4. **Utilities:**  
+   - Add helper functions in `src/eva/utils.py`.
+
+---
+
+### 5.4 Phase 3: Conversation Layer
+
+**Objectives:**
+
+- Enable natural language dialogue for adjusting the plan.
+- Integrate with GPT API (using mocks initially).
+
+**Steps:**
+
+1. **Conversation Function:**  
+   - Function: `handle_conversation(input_str: str, current_plan: dict) -> dict` in `src/eva/conversation.py`.
+   - Test (in `src/tests/test_conversation.py`):
+   ```python
+   def test_handle_conversation_update():
+       from eva.conversation import handle_conversation
+       current_plan = {"deep_work": {"time": "09:00-10:30"}}
+       input_str = "I want to push my deep work session to later."
+       updated_plan = handle_conversation(input_str, current_plan)
+       assert updated_plan["deep_work"]["time"] != "09:00-10:30"
+   ```
+2. **GPT API Helper:**  
+   - In `src/eva/utils.py`, create `query_gpt(prompt: str) -> str`.
+   - Use mocks in tests to simulate API responses.
+3. **Interactive Flow:**  
+   - In `src/eva/main.py`, implement a simple loop or Streamlit interface for conversation.
+
+---
+
+### 5.5 Phase 4: Real-Time Dashboard
+
+**Objectives:**
+
+- Display planned versus actual events with real-time feedback.
+- Provide nudges and visual insights.
+
+**Steps:**
+
+1. **Data Comparison:**  
+   - Function: `compare_plan_actual(plan: dict, actual_events: list) -> dict` in `src/eva/dashboard.py`.
+   - Test (in `src/tests/test_dashboard.py`):
+   ```python
+   def test_compare_plan_actual():
+       from eva.dashboard import compare_plan_actual
+       plan = {"deep_work": {"time": "09:00-10:30", "status": "planned"}}
+       actual = [{"summary": "Meeting", "start": "2023-01-01T09:00", "end": "2023-01-01T09:45"}]
+       report = compare_plan_actual(plan, actual)
+       assert "deep_work" in report
+       # Validate deviation reporting
+   ```
+2. **Dashboard UI:**  
+   - Build a Streamlit interface in `src/eva/dashboard.py` (or separate file) to display the unified view.
+3. **Nudging System:**  
+   - Develop functions to trigger context-aware nudges.
+   - Write tests to simulate deviations and responses.
+
+---
+
+### 5.6 Testing Strategy & Coverage
+
+**Objectives:**
+
+- Achieve near-100% unit test coverage for core functions.
+- Supplement with integration, end-to-end (E2E), user acceptance, performance, and security tests.
+
+**Testing Breakdown:**
+
+1. **Unit Tests:**  
+   - Each module (calendar integration, planning engine, conversation, dashboard) has dedicated unit tests.
+2. **Integration Tests:**  
+   - File: `src/tests/test_integration.py` to ensure modules interact correctly.
+3. **End-to-End Tests:**  
+   - File: `src/tests/test_e2e.py` simulating a full user flow from input to dashboard.
+4. **User Acceptance Tests (UAT):**  
+   - File: `src/tests/test_user_acceptance.py` or use tools like Selenium to simulate real interactions.
+5. **Performance Tests:**  
+   - File: `src/tests/test_performance.py` to benchmark key functions.
+6. **Security Tests:**  
+   - File: `src/tests/test_security.py` to validate secure handling of external integrations.
+
+**Running Tests:**
+```bash
+pytest --maxfail=1 --disable-warnings -q
+```
+
+This comprehensive strategy ensures that while we target near-100% unit test coverage, integration, E2E, UAT, performance, and security tests will further guarantee that Eva meets production standards and delivers a delightful user experience.
+
+---
+
+## 6. Calendar Integration Overview
+
+Eva’s power comes from its seamless integration with all your calendars:
+
+- **Initial Setup:**  
+  - During onboarding, you connect your various calendars (Google, Outlook, etc.) via secure OAuth.
+- **Unified Timeline:**  
+  - Eva aggregates events from all sources into one coherent timeline, resolving overlaps and conflicts.
+- **Plan Generation:**  
+  - When generating your weekly plan, Eva accounts for all pre-existing events, identifying gaps and protected slots.
+- **Real-Time Sync:**  
+  - Throughout the day, Eva continuously updates the unified view with any changes (new events, cancellations, modifications).
+- **Feedback & Reflection:**  
+  - At week’s end, Eva compares the aggregated “actual” events against the planned schedule and provides insights for improvement.
+
+This integration is at the core of Eva’s ability to offer intelligent, context-aware planning and nudges.
+
+---
+
+## 7. Conclusion & Next Steps
+
+### **Conclusion**
+
+Eva transforms the way busy professionals manage their time. With an intuitive front-end that feels like a conversation with a trusted co-pilot, robust back-end logic driven by TDD, and seamless calendar integration, Eva promises a tangible shift from overwhelm to clarity.
+
+### **Next Steps**
+
+1. **Design & Prototype:**  
+   - Finalize high-fidelity wireframes and interactive prototypes.
+2. **Development Kickoff:**  
+   - Implement Phase 1, verify the setup with smoke tests, and iterate through Phases 2–4.
+3. **User Testing:**  
+   - Conduct usability tests and refine the experience based on real user feedback.
+4. **CI/CD & Production Readiness:**  
+   - Integrate continuous testing (unit, integration, E2E, UAT, performance, security) into the CI pipeline.
+5. **Launch & Evangelism:**  
+   - Roll out to beta users, gather testimonials, and iterate rapidly to turn early adopters into evangelists.
+
+By rigorously following this comprehensive plan, Eva is set to deliver an exceptional user experience that not only meets but exceeds the needs of busy professionals—turning every new user into a loyal advocate.
+
+---
+
+*This document is intended for internal use by design, development, and testing teams and will be updated iteratively as Eva evolves through user feedback and new feature integrations.*
