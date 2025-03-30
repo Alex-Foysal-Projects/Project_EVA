@@ -1,0 +1,962 @@
+ // Handle wheel of life completion with improved logging and error handling
+  const handleWheelOfLifeComplete = (values) => {
+    console.log("handleWheelOfLifeComplete called with values:", values);
+    
+    // Hide the wheel of life assessment
+    setShowWheelOfLife(false);
+    
+    // Add a message about the assessment
+    setTimeout(() => {
+      console.log("Adding message about assessment completion");
+      setMessages(prev => [...prev, { 
+        id: prev.length + 1, 
+        type: 'bot', 
+        text: "Thanks for completing your Life Balance Assessment! I'll use this information to help organize your calendar in alignment with your priorities. Now, would you like to connect your calendars so I can help manage your schedule?"
+      }]);
+      
+      // Show calendar after assessment is complete
+      setShowCalendar(true);
+      setShowEmptyCalendarMessage(true);
+    }, 500);
+  };import React, { useState, useRef, useEffect } from 'react';
+import { Mic, Send, MoreVertical, Paperclip, Smile, Calendar, Settings, Bell, ChevronRight, X, ChevronLeft } from 'lucide-react';
+
+// Update or create a simple version of the "Complete & Start Using Eva" button
+// with more direct event handling
+const DirectCompleteButton = ({ onClickComplete, values }) => {
+  return (
+    <button 
+      onClick={() => {
+        console.log("Direct complete button clicked");
+        if (typeof onClickComplete === 'function') {
+          onClickComplete(values);
+        } else {
+          console.error("onClickComplete is not a function");
+        }
+      }}
+      className="px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 font-medium transition-colors"
+    >
+      Complete & Start Using Eva
+    </button>
+  );
+};
+
+const ResizableSplitScreen = () => {
+  // Wheel of Life Assessment component (defined inline to avoid import issues)
+  const WheelOfLifeAssessment = ({ onComplete }) => {
+    const [currentStep, setCurrentStep] = useState(0);
+    const [values, setValues] = useState({
+      health: 5,
+      finances: 5,
+      personalGrowth: 5,
+      romance: 5,
+      familyFriends: 5,
+      funRecreation: 5,
+      physicalEnvironment: 5,
+      businessCareer: 5
+    });
+    
+    const [showResults, setShowResults] = useState(false);
+    
+    const categories = [
+      { id: 'health', name: 'Health', color: '#FF7F50' },
+      { id: 'finances', name: 'Finances', color: '#90EE90' },
+      { id: 'personalGrowth', name: 'Personal Growth', color: '#BA55D3' },
+      { id: 'romance', name: 'Romance', color: '#FF5555' },
+      { id: 'familyFriends', name: 'Family & Friends', color: '#3CB371' },
+      { id: 'funRecreation', name: 'Fun & Recreation', color: '#CD853F' },
+      { id: 'physicalEnvironment', name: 'Physical Environment', color: '#5DC9E2' },
+      { id: 'businessCareer', name: 'Business/Career', color: '#FFD700' }
+    ];
+    
+    const handleValueChange = (category, value) => {
+      setValues({
+        ...values,
+        [category]: value
+      });
+    };
+    
+    const handleNext = () => {
+      if (currentStep < categories.length - 1) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        setShowResults(true);
+      }
+    };
+    
+    const handlePrevious = () => {
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+      }
+    };
+    
+    const handleComplete = () => {
+      console.log("handleComplete called with values:", values);
+      if (onComplete && typeof onComplete === 'function') {
+        console.log("Calling onComplete function");
+        onComplete(values);
+      } else {
+        console.error("onComplete is not a function or is undefined");
+      }
+    };
+    
+    // Questions for each category
+    const questions = {
+      health: "How satisfied are you with your physical health and wellbeing?",
+      finances: "How comfortable are you with your current financial situation?",
+      personalGrowth: "How fulfilled do you feel in terms of personal development and learning?",
+      romance: "How satisfied are you with the romance in your life?",
+      familyFriends: "How would you rate your relationships with family and friends?",
+      funRecreation: "How much enjoyment and recreation do you have in your life?",
+      physicalEnvironment: "How satisfied are you with your physical surroundings and environment?",
+      businessCareer: "How fulfilled are you in your career or business endeavors?"
+    };
+    
+    const tips = {
+      health: "Consider scheduling regular exercise, doctor appointments, and meal preparation time.",
+      finances: "Block time for financial planning, budget reviews, and skill-building for career advancement.",
+      personalGrowth: "Dedicate time for courses, reading, or mindfulness practice.",
+      romance: "Schedule date nights and quality time with your partner.",
+      familyFriends: "Set aside regular family dinners and friend meetups.",
+      funRecreation: "Book time for hobbies, entertainment, and activities you enjoy.",
+      physicalEnvironment: "Allocate time for home maintenance, organizing, or home improvement projects.",
+      businessCareer: "Block focused work time, networking events, and skill development."
+    };
+
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 max-w-3xl mx-auto max-h-[90vh] overflow-y-auto">
+        {!showResults ? (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Life Balance Assessment</h2>
+              <p className="text-gray-600">
+                Step {currentStep + 1} of {categories.length}: Let's understand your priorities to better organize your schedule.
+              </p>
+              <div className="w-full bg-gray-200 h-2 rounded-full mt-4">
+                <div 
+                  className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentStep + 1) / categories.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-semibold mb-3" style={{ color: categories[currentStep].color }}>
+                {categories[currentStep].name}
+              </h3>
+              <p className="text-gray-700 mb-6">{questions[categories[currentStep].id]}</p>
+              
+              <div className="mb-6">
+                <div className="flex justify-between mb-2 text-sm text-gray-600">
+                  <span>Not Satisfied (1)</span>
+                  <span>Very Satisfied (10)</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="10" 
+                  step="1"
+                  value={values[categories[currentStep].id]} 
+                  onChange={(e) => handleValueChange(categories[currentStep].id, parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between mt-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                    <span 
+                      key={num} 
+                      className={`w-8 h-8 flex items-center justify-center rounded-full cursor-pointer transition-colors ${
+                        values[categories[currentStep].id] === num 
+                          ? 'bg-cyan-500 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                      onClick={() => handleValueChange(categories[currentStep].id, num)}
+                    >
+                      {num}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between">
+              <button 
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+                className={`px-4 py-2 rounded ${
+                  currentStep === 0 
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-500 text-white hover:bg-gray-600'
+                }`}
+              >
+                Previous
+              </button>
+              <button 
+                onClick={handleNext}
+                className="px-6 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600"
+              >
+                {currentStep === categories.length - 1 ? 'See Results' : 'Next'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Life Balance Results</h2>
+            
+            <div className="relative mb-8 flex justify-center">
+              <svg width="340" height="340" viewBox="0 0 400 400" className="mx-auto">
+                {/* Center point */}
+                <circle cx="200" cy="200" r="3" fill="#333" />
+                
+                {/* Measurement circles */}
+                <circle cx="200" cy="200" r="180" fill="none" stroke="#ddd" strokeWidth="1" strokeDasharray="4,4" />
+                <circle cx="200" cy="200" r="144" fill="none" stroke="#ddd" strokeWidth="1" strokeDasharray="4,4" />
+                <circle cx="200" cy="200" r="108" fill="none" stroke="#ddd" strokeWidth="1" strokeDasharray="4,4" />
+                <circle cx="200" cy="200" r="72" fill="none" stroke="#ddd" strokeWidth="1" strokeDasharray="4,4" />
+                <circle cx="200" cy="200" r="36" fill="none" stroke="#ddd" strokeWidth="1" strokeDasharray="4,4" />
+                
+                {/* Dividing lines */}
+                {categories.map((category, index) => {
+                  const angle = (index * 45) * (Math.PI / 180);
+                  const x2 = 200 + 180 * Math.cos(angle);
+                  const y2 = 200 + 180 * Math.sin(angle);
+                  return (
+                    <line 
+                      key={category.id}
+                      x1="200" 
+                      y1="200" 
+                      x2={x2} 
+                      y2={y2} 
+                      stroke="#ddd" 
+                      strokeWidth="1" 
+                    />
+                  );
+                })}
+                
+                {/* Category labels */}
+                {categories.map((category, index) => {
+                  const angle = (index * 45) * (Math.PI / 180);
+                  const x = 200 + 205 * Math.cos(angle);
+                  const y = 200 + 205 * Math.sin(angle);
+                  return (
+                    <g key={`label-${category.id}`}>
+                      <rect 
+                        x={x - 50} 
+                        y={y - 12} 
+                        width="100" 
+                        height="24" 
+                        rx="4" 
+                        fill={category.color} 
+                      />
+                      <text 
+                        x={x} 
+                        y={y + 5} 
+                        textAnchor="middle" 
+                        fill="white" 
+                        fontSize="10"
+                        fontWeight="bold"
+                      >
+                        {category.name.toUpperCase()}
+                      </text>
+                    </g>
+                  );
+                })}
+                
+                {/* Data polygon */}
+                <polygon
+                  points={categories.map((category, index) => {
+                    const value = values[category.id];
+                    const radius = (value / 10) * 180;
+                    const angle = (index * 45) * (Math.PI / 180);
+                    const x = 200 + radius * Math.cos(angle);
+                    const y = 200 + radius * Math.sin(angle);
+                    return `${x},${y}`;
+                  }).join(' ')}
+                  fill="rgba(6, 182, 212, 0.2)"
+                  stroke="#06b6d4"
+                  strokeWidth="2"
+                />
+                
+                {/* Data points */}
+                {categories.map((category, index) => {
+                  const value = values[category.id];
+                  const radius = (value / 10) * 180;
+                  const angle = (index * 45) * (Math.PI / 180);
+                  const x = 200 + radius * Math.cos(angle);
+                  const y = 200 + radius * Math.sin(angle);
+                  return (
+                    <circle 
+                      key={`point-${category.id}`}
+                      cx={x} 
+                      cy={y} 
+                      r="6" 
+                      fill={category.color}
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  );
+                })}
+                
+                {/* Scale labels (1-10) */}
+                {[2, 5, 8].map(scale => {
+                  const radius = (scale / 10) * 180;
+                  return (
+                    <g key={`scale-${scale}`}>
+                      <text 
+                        x="205" 
+                        y={200 - radius - 2} 
+                        textAnchor="middle" 
+                        fill="#888" 
+                        fontSize="10"
+                      >
+                        {scale}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Calendar Recommendations</h3>
+              <p className="mb-4 text-gray-700">
+                Based on your assessment, Eva will help organize your calendar to create better balance in these areas:
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {categories.map(category => (
+                  <div key={`tip-${category.id}`} className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold mb-2" style={{ color: category.color }}>
+                      {category.name} ({values[category.id]}/10)
+                    </h4>
+                    <p className="text-sm text-gray-700">{tips[category.id]}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <DirectCompleteButton 
+                onClickComplete={onComplete} 
+                values={values} 
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+  const [messages, setMessages] = useState([
+    { id: 1, type: 'bot', text: "Welcome! I'm Eva, your new executive assistant. I'm here to help you manage your multiple calendars and organize your schedule based on what matters most to you. Let's start by understanding your priorities." }
+  ]);
+  
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true);
+  const [showCalendarIntegration, setShowCalendarIntegration] = useState(false);
+  const [showEmptyCalendarMessage, setShowEmptyCalendarMessage] = useState(true);
+  const [showWheelOfLife, setShowWheelOfLife] = useState(true);
+  
+  const [inputValue, setInputValue] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [splitPosition, setSplitPosition] = useState(40); // Default split at 40% for chat
+  const [isResizing, setIsResizing] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const splitPanelRef = useRef(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // First-time user experience
+  useEffect(() => {
+    if (isFirstTimeUser) {
+      // Initially don't show the calendar integration modal
+      // User can trigger it from the empty calendar state
+      const timer = setTimeout(() => {
+        setShowCalendarIntegration(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstTimeUser]);
+  
+  // Hide empty calendar message when calendar has events or is hidden
+  useEffect(() => {
+    if (!showCalendar || !showEmptyCalendarMessage) return;
+    
+    const hasConnectedCalendar = false; // This would be set to true once calendars are connected
+    
+    if (hasConnectedCalendar) {
+      setShowEmptyCalendarMessage(false);
+    }
+  }, [showCalendar, showEmptyCalendarMessage]);
+  
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileMenu && !event.target.closest('.profile-menu-container')) {
+        setShowProfileMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
+
+  const handleSend = () => {
+    if (inputValue.trim()) {
+      setMessages([...messages, { id: messages.length + 1, type: 'user', text: inputValue }]);
+      setInputValue('');
+      
+      // Simulate bot response after a short delay
+      setTimeout(() => {
+        let responseText = "I'll help you with that right away.";
+        
+        // First-time user specific responses
+        if (isFirstTimeUser) {
+          if (messages.length === 1) {
+            responseText = "Based on your life balance assessment, I can see where you might want to focus more attention. I can help allocate time for these activities in your schedule. Would you like me to help organize your calendar based on these priorities?";
+            
+            // Ensure calendar view is visible but don't show integration modal automatically
+            if (!showCalendar) {
+              setShowCalendar(true);
+            }
+          } else if (inputValue.toLowerCase().includes('yes') || 
+                    inputValue.toLowerCase().includes('connect') || 
+                    inputValue.toLowerCase().includes('sure') ||
+                    inputValue.toLowerCase().includes('ok')) {
+            responseText = "Great! I'll help you manage your schedule based on your priorities. What area would you like to focus on improving first?";
+          }
+          
+          // Mark as not a first-time user if they've engaged in conversation
+          if (messages.length > 2) {
+            setIsFirstTimeUser(false);
+            // Hide empty calendar message after user has engaged
+            if (inputValue.toLowerCase().includes('connect') || 
+                inputValue.toLowerCase().includes('calendar')) {
+              setShowEmptyCalendarMessage(false);
+            }
+          }
+        } 
+        // Regular responses for returning users
+        else if (inputValue.toLowerCase().includes('calendar') || 
+            inputValue.toLowerCase().includes('schedule') ||
+            inputValue.toLowerCase().includes('meeting')) {
+          responseText = "I've updated your calendar based on your request. You can see the changes in the calendar view.";
+          if (!showCalendar) {
+            setShowCalendar(true);
+          }
+        }
+        
+        setMessages(prev => [...prev, { 
+          id: prev.length + 1, 
+          type: 'bot', 
+          text: responseText
+        }]);
+      }, 1000);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      // If we were recording and canceled, don't send anything
+    } else {
+      // Start recording
+      setIsRecording(true);
+      setRecordingTime(0);
+      const interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Auto-detect and stop after short period
+      setTimeout(() => {
+        setInputValue("Can you show me my calendar for this week?");
+        setIsRecording(false);
+        clearInterval(interval);
+      }, 3000);
+      
+      return () => clearInterval(interval);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  };
+
+  const startResize = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+  };
+
+  const handleResize = (e) => {
+    if (!isResizing || !splitPanelRef.current) return;
+    
+    const containerRect = splitPanelRef.current.getBoundingClientRect();
+    const newPosition = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+    
+    // Allow sliding to either edge (with small buffer for usability)
+    if (newPosition >= 5 && newPosition <= 95) {
+      setSplitPosition(newPosition);
+    }
+  };
+
+  const stopResize = () => {
+    setIsResizing(false);
+    document.removeEventListener('mousemove', handleResize);
+    document.removeEventListener('mouseup', stopResize);
+  };
+
+  const toggleCalendarView = () => {
+    setShowCalendar(!showCalendar);
+    if (!showCalendar) {
+      // If we're showing the calendar again, use the previous position or default
+      setSplitPosition(40); 
+    } else {
+      // If we're hiding the calendar, expand chat to full width
+      setSplitPosition(100);
+    }
+  };
+  
+  // Button to quickly snap to different layouts
+  const snapToLayout = (layout) => {
+    switch(layout) {
+      case 'chat':
+        setSplitPosition(95);
+        break;
+      case 'calendar':
+        setSplitPosition(5);
+        break;
+      case 'balanced':
+        setSplitPosition(40);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Calendar data for visualization with improved colors
+  const calendarEvents = [
+    { id: 1, title: 'Movie Night', day: 'Thu', start: '9:00', end: '10:00', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 2, title: 'Team Meeting', day: 'Fri', start: '11:30', end: '13:00', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 3, title: 'Project Review', day: 'Fri', start: '14:00', end: '15:00', color: 'bg-cyan-500 hover:bg-cyan-600' },
+    { id: 4, title: 'Park Visit', day: 'Sun', start: '9:00', end: '11:30', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 5, title: 'Game Night', day: 'Wed', start: '11:00', end: '12:30', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 6, title: 'Yoga Class', day: 'Wed', start: '12:30', end: '14:00', color: 'bg-purple-500 hover:bg-purple-600' },
+    { id: 7, title: 'Study Time', day: 'Wed', start: '12:30', end: '13:30', color: 'bg-purple-500 hover:bg-purple-600' },
+    { id: 8, title: 'Movie Night', day: 'Wed', start: '13:30', end: '15:00', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 9, title: '1:1 with Manager', day: 'Thu', start: '11:30', end: '12:30', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 10, title: '1:1 with Manager', day: 'Thu', start: '13:30', end: '15:30', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 11, title: 'Park Visit', day: 'Mon', start: '14:30', end: '16:30', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 12, title: 'Project Review', day: 'Mon', start: '16:30', end: '17:30', color: 'bg-cyan-500 hover:bg-cyan-600' },
+    { id: 13, title: 'Dinner', day: 'Tue', start: '18:00', end: '19:30', color: 'bg-cyan-500 hover:bg-cyan-600' },
+    { id: 14, title: 'Project Review', day: 'Tue', start: '15:30', end: '17:00', color: 'bg-cyan-500 hover:bg-cyan-600' },
+    { id: 15, title: 'Deep Work Session', day: 'Tue', start: '16:30', end: '17:30', color: 'bg-cyan-500 hover:bg-cyan-600' },
+    { id: 16, title: 'Team Meeting', day: 'Wed', start: '15:30', end: '17:30', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 17, title: 'Reading', day: 'Thu', start: '16:00', end: '17:00', color: 'bg-purple-500 hover:bg-purple-600' },
+    { id: 18, title: 'Team Meeting', day: 'Fri', start: '16:30', end: '17:30', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 19, title: 'Study Time', day: 'Fri', start: '15:00', end: '16:00', color: 'bg-purple-500 hover:bg-purple-600' },
+    { id: 20, title: 'Team Meeting', day: 'Fri', start: '17:00', end: '18:00', color: 'bg-blue-500 hover:bg-blue-600' },
+    { id: 21, title: 'Yoga Class', day: 'Sun', start: '15:00', end: '16:00', color: 'bg-purple-500 hover:bg-purple-600' },
+    { id: 22, title: 'Game Night', day: 'Sun', start: '14:30', end: '16:00', color: 'bg-pink-500 hover:bg-pink-600' },
+    { id: 23, title: 'Study Time', day: 'Sun', start: '13:00', end: '14:00', color: 'bg-purple-500 hover:bg-purple-600' }
+  ];
+
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNumbers = [24, 25, 26, 27, 28, 29, 30];
+  const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8:00 to 20:00 (8am to 8pm)
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-800">
+      {/* Header */}
+      <div className="flex items-center px-4 py-3 bg-gray-900 text-white">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-2">
+            E
+          </div>
+          <div className="font-bold">Eva</div>
+        </div>
+        
+        <div className="flex items-center mx-auto">
+          <button className="flex items-center text-cyan-400 font-medium">
+            <Calendar className="w-5 h-5 mr-2" />
+            Calendar
+          </button>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <button className="relative">
+            <Bell className="w-5 h-5 text-gray-300" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-cyan-400 rounded-full"></span>
+          </button>
+          <div className="relative profile-menu-container">
+            <button 
+              className="focus:outline-none"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              <div className="w-8 h-8 bg-gray-700 rounded-full"></div>
+            </button>
+            
+            {/* Profile dropdown menu */}
+                          {showProfileMenu && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-md shadow-lg py-1 w-48" style={{ zIndex: 50 }}>
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <div className="font-medium">User Name</div>
+                  <div className="text-sm text-gray-500">user@example.com</div>
+                </div>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                  Help & Support
+                </button>
+                <div className="border-t border-gray-100 mt-1"></div>
+                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Main content - Split panel */}
+      <div 
+        className="flex-1 flex overflow-hidden" 
+        ref={splitPanelRef}
+        style={{ cursor: isResizing ? 'col-resize' : 'auto' }}
+      >
+        {/* Wheel of Life Assessment Modal (appears on first load) */}
+        {showWheelOfLife && (
+          <div className="fixed inset-0 bg-gray-800 bg-opacity-70 z-50 flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto pt-10">
+            <div className="my-8">
+              <WheelOfLifeAssessment onComplete={handleWheelOfLifeComplete} />
+            </div>
+          </div>
+        )}
+        
+        {/* Left panel - Chat */}
+        <div 
+          className={`flex flex-col bg-white transition-all duration-300 ${splitPosition < 5 ? 'opacity-50' : 'opacity-100'}`}
+          style={{ width: `${splitPosition}%`, minWidth: '50px' }}
+        >
+          <div className="px-4 py-3 border-b border-gray-200">
+            <h1 className="text-xl font-bold">Eva Assistant</h1>
+          </div>
+          
+          <div className="flex-1 flex flex-col overflow-hidden p-4">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-2">
+                E
+              </div>
+              <div className="font-bold">Eva Assistant</div>
+            </div>
+            
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto mb-4">
+              {messages.map((message) => (
+                <div 
+                  key={message.id} 
+                  className={`mb-4 ${message.type === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
+                >
+                  {message.type === 'bot' && (
+                    <div className="bg-purple-100 rounded-2xl p-4 shadow-sm max-w-xs mr-auto">
+                      {message.text}
+                    </div>
+                  )}
+                  
+                  {message.type === 'user' && (
+                    <div className="bg-cyan-400 text-white rounded-2xl p-3 shadow-sm max-w-xs ml-auto">
+                      {message.text}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Input area */}
+            <div className="mt-auto">
+              {isRecording ? (
+                <div className="flex items-center justify-between bg-gray-100 rounded-full p-2 mb-2">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></div>
+                    <div className="text-gray-700">Listening... {formatTime(recordingTime)}</div>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="text-gray-500 text-sm px-3 py-1 hover:bg-gray-200 rounded-full transition-colors"
+                      onClick={toggleRecording}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="text-white text-sm px-3 py-1 bg-blue-500 rounded-full ml-2 hover:bg-blue-600 transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center bg-gray-100 rounded-full p-1">
+                  <div className="relative">
+                    <button className="p-2 transition-all hover:text-blue-500">
+                      <Smile className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask Eva anything..."
+                    className="flex-1 bg-transparent outline-none px-2"
+                  />
+                  <div className="flex">
+                    <button className="p-2 transition-all hover:text-blue-500">
+                      <Paperclip className="w-5 h-5 text-gray-500" />
+                    </button>
+                    <button 
+                      className={`p-2 ml-1 rounded-full flex items-center justify-center transition-all ${
+                        isRecording 
+                          ? "bg-red-500" 
+                          : inputValue 
+                            ? "bg-cyan-500" 
+                            : "bg-cyan-500"
+                      }`}
+                      onClick={inputValue ? handleSend : toggleRecording}
+                    >
+                      {isRecording ? (
+                        <div className="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                      ) : inputValue ? (
+                        <Send className="w-5 h-5 text-white" />
+                      ) : (
+                        <Mic className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="flex space-x-2 mt-2">
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('chat')}
+                  title="Focus on chat"
+                >
+                  Chat
+                </button>
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('balanced')}
+                  title="Balance both panels"
+                >
+                  50/50
+                </button>
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('calendar')}
+                  title="Focus on calendar"
+                >
+                  Calendar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Resizer */}
+        <div 
+          className="w-1 bg-gray-200 hover:bg-cyan-400 cursor-col-resize flex-shrink-0 relative z-10"
+          onMouseDown={startResize}
+          onDoubleClick={() => snapToLayout(splitPosition < 50 ? 'chat' : 'calendar')}
+        >
+          {/* Toggle button */}
+          <button 
+            className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-16 bg-gray-200 hover:bg-gray-300 rounded-r-md flex items-center justify-center"
+            onClick={toggleCalendarView}
+          >
+            {showCalendar ? 
+              (splitPosition < 50 ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />) : 
+              <ChevronRight className="w-4 h-4" />
+            }
+          </button>
+        </div>
+        
+        {/* Right panel - Calendar (conditionally rendered) */}
+        {showCalendar && (
+          <div 
+            className={`bg-white transition-all duration-300 ${splitPosition > 95 ? 'opacity-50' : 'opacity-100'}`}
+            style={{ width: `${100 - splitPosition}%`, minWidth: '50px' }}
+          >
+            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
+              <h2 className="text-xl font-bold">Your Calendar</h2>
+              <button 
+                className="flex items-center text-gray-500 hover:text-gray-700"
+                onClick={toggleCalendarView}
+              >
+                <X className="w-5 h-5 mr-1" />
+                Hide Calendar
+              </button>
+            </div>
+            
+            <div className="overflow-auto h-full p-2 relative">
+              {/* Calendar Integration Modal */}
+              {showCalendarIntegration && (
+                <div className="absolute top-4 right-4 bg-white shadow-lg rounded-lg p-6 border border-cyan-200 animate-fade-in w-80" style={{ zIndex: 40 }}>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-800">Let's Connect Your Calendars</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Connect your Google Calendar accounts so Eva can help you plan your life exactly how you want it.
+                  </p>
+                  <div className="flex flex-col space-y-3">
+                    <button className="flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-sm hover:bg-gray-50 transition-colors">
+                      <svg className="w-6 h-6 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20,3H19V1H17V3H7V1H5V3H4A2,2 0 0,0 2,5V21A2,2 0 0,0 4,23H20A2,2 0 0,0 22,21V5A2,2 0 0,0 20,3M20,21H4V10H20V21M20,8H4V5H20V8Z" />
+                      </svg>
+                      Connect Google Calendar
+                    </button>
+                    <button className="flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-sm hover:bg-gray-50 transition-colors">
+                      <svg className="w-6 h-6 mr-3 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21,10V4H3V10H21M21,14H3V20H21V14M3,2H21A2,2 0 0,1 23,4V20A2,2 0 0,1 21,22H3A2,2 0 0,1 1,20V4A2,2 0 0,1 3,2M17,17H14V15H17V17Z" />
+                      </svg>
+                      Connect Outlook Calendar
+                    </button>
+                    <button className="flex items-center justify-center bg-white border border-gray-300 rounded-md py-3 px-4 text-sm hover:bg-gray-50 transition-colors">
+                      <svg className="w-6 h-6 mr-3 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,19H5V8H19M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,12A1,1 0 0,1 11,11A1,1 0 0,1 12,10A1,1 0 0,1 13,11A1,1 0 0,1 12,12Z" />
+                      </svg>
+                      Connect Another Calendar
+                    </button>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button 
+                      className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+                      onClick={() => setShowCalendarIntegration(false)}
+                    >
+                      Remind me later
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Empty Calendar State */}
+              {showEmptyCalendarMessage && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 backdrop-blur-sm" style={{ zIndex: 30 }}>
+                  <div className="text-center p-8 max-w-md bg-white rounded-xl shadow-lg border border-gray-100">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-cyan-100 rounded-full flex items-center justify-center">
+                      <Calendar className="w-10 h-10 text-cyan-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-3 text-gray-800">Your Calendar Is Empty</h3>
+                    <p className="text-gray-600 mb-6 text-base leading-relaxed">
+                      Connect your calendars so Eva can help you manage your schedule across all platforms.
+                    </p>
+                    <button 
+                      className="px-6 py-3 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors font-medium"
+                      onClick={() => setShowCalendarIntegration(true)}
+                    >
+                      Connect Calendars
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-8 border border-gray-200 min-w-max">
+                {/* Time column */}
+                <div className="border-r border-gray-200">
+                  <div className="h-12 border-b border-gray-200 bg-gray-50 flex items-center justify-center">
+                    <span className="text-xs font-medium text-gray-400">TIME</span>
+                  </div>
+                  {hours.map(hour => (
+                    <div key={hour} className="h-12 border-b border-gray-200 px-2 text-right text-xs text-gray-500 flex items-center justify-end">
+                      {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Day columns */}
+                {days.map((day, idx) => (
+                  <div key={day} className="border-r border-gray-200">
+                <div className="text-center p-2 border-b border-gray-200 bg-gray-50">
+                  <div className="font-medium">{day}</div>
+                  <div className="text-sm text-gray-500">{dayNumbers[idx]}</div>
+                </div>
+                    
+                    {/* Time slots */}
+                    <div className="relative h-full">
+                      {hours.map(hour => (
+                        <div key={hour} className="h-12 border-b border-gray-200"></div>
+                      ))}
+                      
+                      {/* Events */}
+                      {calendarEvents
+                        .filter(event => event.day === day)
+                        .map(event => {
+                          // Calculate position and height using 24-hour format
+                          const startHour = parseInt(event.start.split(':')[0]);
+                          const startMinute = parseInt(event.start.split(':')[1] || 0);
+                          const endHour = parseInt(event.end.split(':')[0]);
+                          const endMinute = parseInt(event.end.split(':')[1] || 0);
+                          
+                          // Format display time (convert from 24h to 12h format for display)
+                          const formatTimeDisplay = (hour, minute) => {
+                            const h = hour > 12 ? hour - 12 : hour;
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            return `${h}:${minute.toString().padStart(2, '0')} ${ampm}`;
+                          };
+                          
+                          // Each hour slot is 48px tall
+                          // Calculate position relative to the first time slot (8:00)
+                          const hourOffset = startHour - 8; // Our calendar starts at 8:00
+                          const minuteOffset = startMinute / 60;
+                          const top = (hourOffset + minuteOffset) * 48;
+                          
+                          // Calculate event height based on duration
+                          const durationHours = endHour - startHour;
+                          const durationMinutes = (endMinute - startMinute) / 60;
+                          const height = (durationHours + durationMinutes) * 48;
+                          
+                          return (
+                            <div 
+                              key={event.id}
+                              className={`absolute w-11/12 left-1/2 -translate-x-1/2 rounded-lg p-2 text-white text-xs overflow-hidden shadow-md ${event.color} cursor-pointer calendar-event hover:scale-[1.02]`}
+                              style={{ 
+                                top: `${top}px`,
+                                height: `${height}px`,
+                                zIndex: 10
+                              }}
+                            >
+                              <div className="font-medium text-sm">{event.title}</div>
+                              <div className="text-xs opacity-90 mt-1">
+                                {startHour > 12 ? startHour - 12 : startHour}:{startMinute.toString().padStart(2, '0')} {startHour >= 12 ? 'PM' : 'AM'} - 
+                                {endHour > 12 ? endHour - 12 : endHour}:{endMinute.toString().padStart(2, '0')} {endHour >= 12 ? 'PM' : 'AM'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ResizableSplitScreen;
