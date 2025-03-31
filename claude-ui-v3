@@ -1,0 +1,564 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Mic, Send, Paperclip, Smile, Calendar, Settings, Bell, ChevronRight, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+
+const ResizableSplitScreen = () => {
+  // Chat state
+  const [messages, setMessages] = useState([
+    { id: 1, type: 'bot', text: "Hello! I'm Eva, your executive virtual assistant. How can I help you today?" },
+    { id: 2, type: 'user', text: "hi" },
+    { id: 3, type: 'bot', text: "Hi there! I'm Eva, your executive assistant. How can I help you today?" },
+    { id: 4, type: 'user', text: "Aren't you supposed to know?" },
+    { id: 5, type: 'bot', text: "I'm here to help organize your schedule and priorities. Let me know if you want to see your calendar or if there's anything else I can assist you with!" }
+  ]);
+  
+  const [inputValue, setInputValue] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  
+  // UI state
+  const [splitPosition, setSplitPosition] = useState(40); // Default split at 40% for chat
+  const [isResizing, setIsResizing] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showCalendarDropdown, setShowCalendarDropdown] = useState(false);
+  
+  // Calendar state
+  const [availableCalendars, setAvailableCalendars] = useState([
+    { id: 'work', name: 'Work', color: 'bg-blue-400', selected: true },
+    { id: 'personal', name: 'Personal', color: 'bg-pink-500', selected: true },
+    { id: 'family', name: 'Family', color: 'bg-purple-500', selected: true },
+    { id: 'study', name: 'Study', color: 'bg-cyan-400', selected: true },
+    { id: 'google', name: 'Google Calendar', color: 'bg-yellow-400', selected: false },
+    { id: 'outlook', name: 'Outlook', color: 'bg-indigo-400', selected: false }
+  ]);
+  
+  // Refs
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const splitPanelRef = useRef(null);
+  const calendarDropdownRef = useRef(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileMenu && !event.target.closest('.profile-menu-container')) {
+        setShowProfileMenu(false);
+      }
+      
+      if (showCalendarDropdown && calendarDropdownRef.current && !calendarDropdownRef.current.contains(event.target)) {
+        setShowCalendarDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu, showCalendarDropdown]);
+
+  const handleSend = () => {
+    if (inputValue.trim()) {
+      setMessages([...messages, { id: messages.length + 1, type: 'user', text: inputValue }]);
+      setInputValue('');
+      
+      // Simulate bot response after a short delay
+      setTimeout(() => {
+        let responseText = "I'll help you with that right away.";
+        
+        if (inputValue.toLowerCase().includes('calendar') || 
+            inputValue.toLowerCase().includes('schedule') ||
+            inputValue.toLowerCase().includes('meeting')) {
+          responseText = "I've updated your calendar based on your request. You can see the changes in the calendar view.";
+          // Give more space to calendar when calendar-related requests are made
+          setSplitPosition(30);
+        }
+        
+        setMessages(prev => [...prev, { 
+          id: prev.length + 1, 
+          type: 'bot', 
+          text: responseText
+        }]);
+      }, 1000);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      // If we were recording and canceled, don't send anything
+    } else {
+      // Start recording
+      setIsRecording(true);
+      setRecordingTime(0);
+      const interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Auto-detect and stop after short period
+      setTimeout(() => {
+        setInputValue("Can you show me my calendar for this week?");
+        setIsRecording(false);
+        clearInterval(interval);
+      }, 3000);
+      
+      return () => clearInterval(interval);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  };
+
+  // Calendar selection handling
+  const toggleCalendarSelection = (calendarId) => {
+    setAvailableCalendars(prev => 
+      prev.map(cal => 
+        cal.id === calendarId 
+          ? { ...cal, selected: !cal.selected } 
+          : cal
+      )
+    );
+  };
+
+  // FIXED resize functionality with proper event handling
+  const startResize = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    // Use event listeners on document for better tracking
+    const handleMouseMove = (e) => {
+      if (!splitPanelRef.current) return;
+      
+      const containerRect = splitPanelRef.current.getBoundingClientRect();
+      const newPosition = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      // Constrain to reasonable bounds (5% minimum on either side)
+      if (newPosition >= 5 && newPosition <= 95) {
+        setSplitPosition(newPosition);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      
+      // Optional: Snap to nice positions if close enough
+      if (splitPosition < 10) {
+        setSplitPosition(5); // Snap to minimal chat width
+      } else if (splitPosition > 90) {
+        setSplitPosition(95); // Snap to minimal calendar width
+      } else if (Math.abs(splitPosition - 50) < 5) {
+        setSplitPosition(50); // Snap to middle if close
+      }
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+  
+  // Button to quickly snap to different layouts
+  const snapToLayout = (layout) => {
+    switch(layout) {
+      case 'chat':
+        setSplitPosition(75);
+        break;
+      case 'calendar':
+        setSplitPosition(25);
+        break;
+      case 'balanced':
+        setSplitPosition(50);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Calendar data for visualization - filter by selected calendars
+  const allCalendarEvents = [
+    { id: 1, title: 'Movie Night', day: 'Thu', start: '9:00', end: '10:00', calendarId: 'personal' },
+    { id: 2, title: 'Team Meeting', day: 'Fri', start: '11:30', end: '1:00', calendarId: 'work' },
+    { id: 3, title: 'Project Review', day: 'Fri', start: '2:00', end: '3:00', calendarId: 'work' },
+    { id: 4, title: 'Park Visit', day: 'Sun', start: '9:00', end: '11:30', calendarId: 'family' },
+    { id: 5, title: 'Game Night', day: 'Wed', start: '11:00', end: '12:30', calendarId: 'personal' },
+    { id: 6, title: 'Yoga Class', day: 'Wed', start: '12:30', end: '2:00', calendarId: 'personal' },
+    { id: 7, title: 'Study Time', day: 'Wed', start: '12:30', end: '1:30', calendarId: 'study' },
+    { id: 8, title: 'Movie Night', day: 'Wed', start: '1:30', end: '3:00', calendarId: 'personal' },
+    { id: 9, title: 'Team Sync', day: 'Mon', start: '10:00', end: '11:00', calendarId: 'work' },
+    { id: 10, title: 'Dentist', day: 'Tue', start: '14:00', end: '15:00', calendarId: 'personal' },
+    { id: 11, title: 'Research Project', day: 'Mon', start: '13:00', end: '16:00', calendarId: 'study' },
+    { id: 12, title: 'Family Dinner', day: 'Sat', start: '18:00', end: '20:00', calendarId: 'family' }
+  ];
+  
+  // Get selected calendar IDs
+  const selectedCalendarIds = availableCalendars
+    .filter(cal => cal.selected)
+    .map(cal => cal.id);
+  
+  // Filter calendar events by selected calendars
+  const calendarEvents = allCalendarEvents.filter(event => 
+    selectedCalendarIds.includes(event.calendarId)
+  );
+
+  // Map calendarId to color
+  const getCalendarColor = (calendarId) => {
+    const calendar = availableCalendars.find(cal => cal.id === calendarId);
+    return calendar ? calendar.color : 'bg-gray-400';
+  };
+
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNumbers = [24, 25, 26, 27, 28, 29, 30];
+  const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8:00 to 20:00
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 text-gray-800">
+      {/* Header */}
+      <div className="flex items-center px-4 py-3 bg-gray-900 text-white">
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-2">
+            E
+          </div>
+          <div className="font-bold">Eva</div>
+        </div>
+        
+        <div className="flex items-center mx-auto">
+          <button className="flex items-center text-cyan-400 font-medium">
+            <Calendar className="w-5 h-5 mr-2" />
+            Calendar
+          </button>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <button className="relative">
+            <Bell className="w-5 h-5 text-gray-300" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-cyan-400 rounded-full"></span>
+          </button>
+          <div className="relative profile-menu-container">
+            <button 
+              className="focus:outline-none"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              <div className="w-8 h-8 bg-gray-700 rounded-full"></div>
+            </button>
+            
+            {/* Profile dropdown menu */}
+            {showProfileMenu && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-md shadow-lg py-1 w-48 z-20">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <div className="font-medium">User Name</div>
+                  <div className="text-sm text-gray-500">user@example.com</div>
+                </div>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </button>
+                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                  Help & Support
+                </button>
+                <div className="border-t border-gray-100 mt-1"></div>
+                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Main content - Split panel */}
+      <div 
+        className="flex-1 flex overflow-hidden"
+        ref={splitPanelRef}
+        style={{ cursor: isResizing ? 'col-resize' : 'auto' }}
+      >
+        {/* Left panel - Chat */}
+        <div 
+          className="flex flex-col bg-white min-w-0"
+          style={{ 
+            width: `${splitPosition}%`,
+            transition: isResizing ? 'none' : 'width 0.2s ease-out'
+          }}
+        >
+          <div className="px-4 py-3 border-b border-gray-200">
+            <h1 className="text-xl font-bold">Eva Assistant</h1>
+          </div>
+          
+          <div className="flex-1 flex flex-col overflow-hidden p-4">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-2">
+                E
+              </div>
+              <div className="font-bold">Eva Assistant</div>
+            </div>
+            
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto mb-4">
+              {messages.map((message) => (
+                <div 
+                  key={message.id} 
+                  className={`mb-4 ${message.type === 'user' ? 'flex justify-end' : 'flex justify-start'}`}
+                >
+                  {message.type === 'bot' && (
+                    <div className="bg-purple-100 rounded-2xl p-4 shadow-sm max-w-xs mr-auto">
+                      {message.text}
+                    </div>
+                  )}
+                  
+                  {message.type === 'user' && (
+                    <div className="bg-cyan-400 text-white rounded-2xl p-3 shadow-sm max-w-xs ml-auto">
+                      {message.text}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            {/* Input area */}
+            <div className="mt-auto">
+              {isRecording ? (
+                <div className="flex items-center justify-between bg-gray-100 rounded-full p-2 mb-2">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></div>
+                    <div className="text-gray-700">Listening... {formatTime(recordingTime)}</div>
+                  </div>
+                  <div className="flex items-center">
+                    <button 
+                      className="text-gray-500 text-sm px-3 py-1 hover:bg-gray-200 rounded-full transition-colors"
+                      onClick={toggleRecording}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="text-white text-sm px-3 py-1 bg-blue-500 rounded-full ml-2 hover:bg-blue-600 transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center bg-gray-100 rounded-full p-1">
+                  <div className="relative">
+                    <button className="p-2 transition-all hover:text-blue-500">
+                      <Smile className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask Eva anything..."
+                    className="flex-1 bg-transparent outline-none px-2"
+                  />
+                  <div className="flex">
+                    <button className="p-2 transition-all hover:text-blue-500">
+                      <Paperclip className="w-5 h-5 text-gray-500" />
+                    </button>
+                    <button 
+                      className={`p-2 ml-1 rounded-full flex items-center justify-center transition-all ${
+                        isRecording 
+                          ? "bg-red-500" 
+                          : inputValue 
+                            ? "bg-cyan-500" 
+                            : "bg-cyan-500"
+                      }`}
+                      onClick={inputValue ? handleSend : toggleRecording}
+                    >
+                      {isRecording ? (
+                        <div className="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                      ) : inputValue ? (
+                        <Send className="w-5 h-5 text-white" />
+                      ) : (
+                        <Mic className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="flex space-x-2 mt-2">
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('chat')}
+                  title="Focus on chat"
+                >
+                  Chat
+                </button>
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('balanced')}
+                  title="Balance both panels"
+                >
+                  50/50
+                </button>
+                <button 
+                  className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+                  onClick={() => snapToLayout('calendar')}
+                  title="Focus on calendar"
+                >
+                  Calendar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Improved Resizer */}
+        <div className="relative flex-shrink-0 w-1 bg-gray-200 hover:bg-cyan-300 transition-colors">
+          {/* Drag handle with improved visuals */}
+          <div 
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-col-resize z-10 select-none"
+            onMouseDown={startResize}
+            onDoubleClick={() => snapToLayout('balanced')}
+            title="Drag to resize • Double-click to reset"
+          >
+            <div className={`flex flex-col items-center justify-center w-6 h-24 rounded-full ${isResizing ? 'bg-cyan-100' : 'bg-gray-100'} shadow-md transition-all hover:bg-cyan-100`}>
+              <div className="flex flex-col items-center space-y-1">
+                <ChevronLeft className={`w-4 h-4 ${isResizing ? 'text-cyan-500' : 'text-gray-400'}`} />
+                <div className={`w-1 h-10 ${isResizing ? 'bg-cyan-400' : 'bg-gray-300'} rounded-full`}></div>
+                <ChevronRight className={`w-4 h-4 ${isResizing ? 'text-cyan-500' : 'text-gray-400'}`} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Visual indicator of current position */}
+          <div className="absolute top-0 left-0 w-1 bg-cyan-400 transition-all" style={{ height: `${splitPosition}%` }}></div>
+          <div className="absolute bottom-0 left-0 w-1 bg-blue-400 transition-all" style={{ height: `${100 - splitPosition}%` }}></div>
+        </div>
+        
+        {/* Right panel - Calendar (always visible) */}
+        <div 
+          className="flex flex-col bg-white min-w-0"
+          style={{ 
+            width: `${100 - splitPosition}%`,
+            transition: isResizing ? 'none' : 'width 0.2s ease-out' 
+          }}
+        >
+          {/* Calendar header with calendar selector dropdown */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
+            <h2 className="text-xl font-bold">Your Calendar</h2>
+            
+            {/* Calendar selector dropdown */}
+            <div className="relative" ref={calendarDropdownRef}>
+              <button 
+                className="flex items-center text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 transition-colors text-sm"
+                onClick={() => setShowCalendarDropdown(!showCalendarDropdown)}
+              >
+                <span className="mr-1">Calendars</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {showCalendarDropdown && (
+                <div className="absolute right-0 mt-1 bg-white rounded-md shadow-lg py-1 w-56 z-20 border border-gray-200">
+                  <div className="px-3 py-2 border-b border-gray-100">
+                    <div className="font-medium text-sm">Integrated Calendars</div>
+                  </div>
+                  
+                  {availableCalendars.map(calendar => (
+                    <div 
+                      key={calendar.id}
+                      className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => toggleCalendarSelection(calendar.id)}
+                    >
+                      <div className={`w-3 h-3 rounded-full ${calendar.color} mr-2`}></div>
+                      <span className="flex-1 text-sm">{calendar.name}</span>
+                      <div className={`w-5 h-5 rounded flex items-center justify-center ${calendar.selected ? 'bg-blue-500 text-white' : 'border border-gray-300'}`}>
+                        {calendar.selected && <Check className="w-3 h-3" />}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="border-t border-gray-100 mt-1 px-3 py-2">
+                    <button className="text-sm text-blue-500 hover:text-blue-700">
+                      + Add Calendar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Calendar content with proper overflow handling */}
+          <div className="flex-1 overflow-auto">
+            {/* Calendar table with fixed header row */}
+            <div className="grid grid-cols-8 border border-gray-200 min-w-max">
+              {/* Time column with fixed header */}
+              <div className="border-r border-gray-200">
+                {/* Fixed empty cell above time labels */}
+                <div className="h-12 border-b border-gray-200 bg-gray-50 sticky top-0 z-10"></div>
+                
+                {/* Time labels */}
+                {hours.map(hour => (
+                  <div key={hour} className="h-12 border-b border-gray-200 px-2 text-right text-xs text-gray-500">
+                    {hour}:00
+                  </div>
+                ))}
+              </div>
+              
+              {/* Day columns */}
+              {days.map((day, idx) => (
+                <div key={day} className="border-r border-gray-200">
+                  {/* Fixed day header */}
+                  <div className="text-center py-3 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+                    <div className="font-medium">{day}</div>
+                    <div className="text-sm text-gray-500">{dayNumbers[idx]}</div>
+                  </div>
+                  
+                  {/* Time slots */}
+                  <div className="relative">
+                    {hours.map(hour => (
+                      <div key={hour} className="h-12 border-b border-gray-200"></div>
+                    ))}
+                    
+                    {/* Events */}
+                    {calendarEvents
+                      .filter(event => event.day === day)
+                      .map(event => {
+                        // Calculate position and height
+                        const startHour = parseInt(event.start.split(':')[0]);
+                        const startMinute = parseInt(event.start.split(':')[1] || 0);
+                        const endHour = parseInt(event.end.split(':')[0]);
+                        const endMinute = parseInt(event.end.split(':')[1] || 0);
+                        
+                        const top = (startHour - 8) * 48 + (startMinute / 60) * 48; // 48px per hour
+                        const height = ((endHour - startHour) * 60 + (endMinute - startMinute)) / 60 * 48;
+                        
+                        // Get the color based on calendar type
+                        const color = getCalendarColor(event.calendarId);
+                        
+                        return (
+                          <div 
+                            key={event.id}
+                            className={`absolute w-11/12 left-1/2 -translate-x-1/2 rounded-md p-1 text-white text-xs overflow-hidden ${color}`}
+                            style={{ 
+                              top: `${top}px`,
+                              height: `${height}px`
+                            }}
+                          >
+                            <div className="font-medium">{event.title}</div>
+                            <div className="text-xs opacity-90">{event.start} - {event.end}</div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ResizableSplitScreen;
